@@ -21,7 +21,7 @@ A comprehensive collection of Model Context Protocol (MCP) servers for Linux sys
 3. Configure your MCP client (e.g., LM Studio) by adding the desired scripts to your `mcp.json` configuration.
 
 ## Setup Script
-A setup script is provided to automate dependency installation and environment configuration:
+A universal setup script is provided to automatically detect your OS (Arch, CachyOS, Debian, Ubuntu, Fedora) and install all necessary dependencies:
 ```bash
 chmod +x setup.sh
 ./setup.sh
