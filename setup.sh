@@ -1,46 +1,38 @@
 #!/bin/bash
-
-# --- DETECTION OS ---
 if [ -f /etc/os-release ]; then
     . /etc/os-release
-    OS=$ID
+    OS_ID=$ID
+    OS_LIKE=$ID_LIKE
 else
-    OS=$(uname -s)
+    OS_ID="unknown"
 fi
 
-echo "--- MCP Collection Setup (OS: $OS) ---"
+echo "--- MCP Setup: Detected $OS_ID ---"
 
-# --- INSTALLATION DEPENDANCES SYSTEME ---
-case "$OS" in
-    arch|cachyos)
-        sudo pacman -S --needed --noconfirm python-pip python-virtualenv docker docker-compose ffmpeg vnstat speedtest-cli
-        ;;
-    ubuntu|debian)
-        sudo apt update && sudo apt install -y python3-pip python3-venv docker.io docker-compose ffmpeg vnstat speedtest-cli
-        ;;
-    fedora)
-        sudo dnf install -y python3-pip docker docker-compose ffmpeg vnstat speedtest-cli
-        ;;
-    *)
-        echo "OS non supporte automatiquement. Installez python, docker et ffmpeg manuellement."
-        ;;
-esac
+install_arch() {
+    sudo pacman -S --needed --noconfirm python-pip python-virtualenv docker docker-compose ffmpeg vnstat speedtest-cli
+}
 
-# --- CHOIX INSTALLATION ---
-echo ""
-echo "Comment souhaitez-vous installer les serveurs MCP ?"
-echo "1) Localement (Python Virtualenv - Recommande pour monitoring systeme)"
-echo "2) Docker (Conteneurise - Isole mais acces systeme restreint)"
-read -p "Votre choix (1/2) : " CHOICE
+install_debian() {
+    sudo apt update && sudo apt install -y python3-pip python3-venv docker.io docker-compose ffmpeg vnstat speedtest-cli
+}
 
-if [ "$CHOICE" == "1" ]; then
-    echo "--- Installation locale ---"
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install mcp[cli] fastmcp psutil docker pyyaml vnstat-py humanize
-    echo "Installation terminee. Utilisez 'source venv/bin/activate' pour lancer les scripts."
+install_fedora() {
+    sudo dnf install -y python3-pip docker docker-compose ffmpeg vnstat speedtest-cli
+}
+
+if [[ "$OS_ID" == "arch" || "$OS_ID" == "cachyos" || "$OS_LIKE" == *"arch"* ]]; then
+    install_arch
+elif [[ "$OS_ID" == "debian" || "$OS_ID" == "ubuntu" || "$OS_LIKE" == *"debian"* || "$OS_LIKE" == *"ubuntu"* ]]; then
+    install_debian
+elif [[ "$OS_ID" == "fedora" ]]; then
+    install_fedora
 else
-    echo "--- Installation Docker ---"
-    docker-compose up -d --build
-    echo "Conteneurs MCP lances en arriere-plan."
+    echo "Unsupported OS. Please install python, docker, and ffmpeg manually."
+    exit 1
 fi
+
+python3 -m venv venv
+source venv/bin/activate
+pip install mcp[cli] fastmcp psutil docker pyyaml vnstat-py humanize
+echo "Setup complete. Use 'source venv/bin/activate' to run scripts."
